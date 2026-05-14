@@ -69,7 +69,7 @@ export const FinancePage: React.FC = () => {
     .reduce((s, o) => s + o.price, 0)
 
   const debts = allOrders.filter(
-    (o) => ['done', 'paid'].includes(o.status) && o.price - o.prepayment > 0
+    (o) => o.status === 'done' && o.price - o.prepayment > 0
   )
 
   const paidOrders = periodOrders.filter((o) => o.status === 'paid')

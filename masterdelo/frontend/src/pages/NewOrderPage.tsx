@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ChevronDown, ChevronUp, Plus } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { Button } from '../components/ui/Button'
 import { Input, Textarea } from '../components/ui/Input'
@@ -12,24 +12,30 @@ import { useClients, useCreateClient } from '../hooks/useClients'
 import { useToast } from '../components/ui/Toast'
 
 const schema = z.object({
-  title:      z.string().min(1, 'Введите описание работ'),
-  price:      z.coerce.number().min(0, 'Введите сумму'),
-  client_id:  z.string().optional(),
-  prepayment: z.coerce.number().optional(),
-  start_date: z.string().optional(),
-  deadline:   z.string().optional(),
-  address:    z.string().optional(),
-  description: z.string().optional(),
+  title:        z.string().min(1, 'Введите описание работ'),
+  price:        z.coerce.number().min(0, 'Введите сумму'),
+  client_id:    z.string().optional(),
+  prepayment:   z.coerce.number().optional(),
+  start_date:   z.string().optional(),
+  deadline:     z.string().optional(),
+  address:      z.string().optional(),
+  description:  z.string().optional(),
 })
 
 type FormData = z.infer<typeof schema>
+
+const inputCls = `w-full h-12 px-4 rounded-xl border text-base transition-colors
+  bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+  placeholder:text-slate-400 dark:placeholder:text-slate-500
+  border-slate-200 dark:border-slate-600
+  focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`
 
 export const NewOrderPage: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const defaultDate = searchParams.get('date') || ''
   const { showToast } = useToast()
-  const [expanded, setExpanded] = useState(!!defaultDate)
+
   const [newClientMode, setNewClientMode] = useState(false)
   const [newClientName, setNewClientName] = useState('')
   const [newClientPhone, setNewClientPhone] = useState('')
@@ -90,173 +96,147 @@ export const NewOrderPage: React.FC = () => {
     }
   }
 
-  const inputCls = `w-full h-12 px-4 rounded-xl border text-base transition-colors
-    bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
-    placeholder:text-slate-400 dark:placeholder:text-slate-500
-    border-slate-200 dark:border-slate-600
-    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`
-
-  return (
-    <div className="max-w-lg mx-auto">
-      <Header title="Новый заказ" showBack />
-
-      <form onSubmit={handleSubmit(onSubmit)} className="px-4 pt-4 pb-28 space-y-4">
-        {/* Client selector */}
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-            Клиент
-          </label>
-          <div className="relative">
-            {selectedClient && !showClientDropdown ? (
-              <div
-                className={`${inputCls} flex items-center justify-between cursor-pointer`}
-                onClick={() => { setClientSearch(selectedClient.name); setShowClientDropdown(true) }}
-              >
-                <span>{selectedClient.name}</span>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-              </div>
-            ) : (
-              <input
-                className={inputCls}
-                placeholder="Поиск клиента..."
-                value={clientSearch}
-                onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
-                onFocus={() => setShowClientDropdown(true)}
-              />
-            )}
-
-            {showClientDropdown && (
-              <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-xl z-20 max-h-52 overflow-y-auto mt-1">
-                {filteredClients.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-900 dark:text-slate-100"
-                    onClick={() => {
-                      setValue('client_id', c.id)
-                      setClientSearch(c.name)
-                      setShowClientDropdown(false)
-                    }}
-                  >
-                    <span className="font-medium">{c.name}</span>
-                    {c.phone && <span className="text-sm text-slate-400">{c.phone}</span>}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="w-full px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center gap-2 border-t border-slate-100 dark:border-slate-700"
-                  onClick={() => { setNewClientMode(true); setShowClientDropdown(false) }}
-                >
-                  <Plus className="h-4 w-4" /> Новый клиент
-                </button>
-              </div>
-            )}
+  const ClientSelector = () => (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        Клиент
+      </label>
+      <div className="relative">
+        {selectedClient && !showClientDropdown ? (
+          <div
+            className={`${inputCls} flex items-center justify-between cursor-pointer`}
+            onClick={() => { setClientSearch(selectedClient.name); setShowClientDropdown(true) }}
+          >
+            <span>{selectedClient.name}</span>
+            <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
           </div>
+        ) : (
+          <input
+            className={inputCls}
+            placeholder="Поиск клиента..."
+            value={clientSearch}
+            onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
+            onFocus={() => setShowClientDropdown(true)}
+          />
+        )}
 
-          {newClientMode && (
-            <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-800 space-y-2">
-              <Input
-                placeholder="Имя клиента *"
-                value={newClientName}
-                onChange={(e) => setNewClientName(e.target.value)}
-              />
-              <Input
-                placeholder="Телефон"
-                type="tel"
-                value={newClientPhone}
-                onChange={(e) => setNewClientPhone(e.target.value)}
-              />
-              <div className="flex gap-2">
-                <Button type="button" size="sm" onClick={handleCreateClient} loading={createClient.isPending}>
-                  Добавить
-                </Button>
-                <Button type="button" size="sm" variant="ghost" onClick={() => setNewClientMode(false)}>
-                  Отмена
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Title */}
-        <Textarea
-          label="Что делаем *"
-          placeholder="Навес из профтрубы, 6×4 метра"
-          rows={3}
-          error={errors.title?.message}
-          {...register('title')}
-        />
-
-        {/* Price */}
-        <Input
-          label="Сумма *"
-          type="number"
-          inputMode="numeric"
-          placeholder="45000"
-          error={errors.price?.message}
-          {...register('price')}
-        />
-
-        {/* Optional fields toggle */}
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-between py-2 text-sm text-slate-600 dark:text-slate-400 font-medium"
-        >
-          Дополнительно
-          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-
-        {expanded && (
-          <div className="space-y-4 animate-fade-in">
-            <Input
-              label="Аванс получен"
-              type="number"
-              inputMode="numeric"
-              placeholder="0"
-              {...register('prepayment')}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Начало работ"
-                type="date"
-                {...register('start_date')}
-              />
-              <Input
-                label="Срок сдачи"
-                type="date"
-                {...register('deadline')}
-              />
-            </div>
-            <Input
-              label="Адрес объекта"
-              type="text"
-              placeholder="ул. Ленина 12, кв. 5"
-              {...register('address')}
-            />
-            <Textarea
-              label="Заметки"
-              placeholder="Любые дополнительные пометки..."
-              rows={2}
-              {...register('description')}
-            />
+        {showClientDropdown && (
+          <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-xl z-20 max-h-52 overflow-y-auto mt-1">
+            {filteredClients.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-900 dark:text-slate-100"
+                onClick={() => { setValue('client_id', c.id); setClientSearch(c.name); setShowClientDropdown(false) }}
+              >
+                <span className="font-medium">{c.name}</span>
+                {c.phone && <span className="text-sm text-slate-400">{c.phone}</span>}
+              </button>
+            ))}
+            <button
+              type="button"
+              className="w-full px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center gap-2 border-t border-slate-100 dark:border-slate-700"
+              onClick={() => { setNewClientMode(true); setShowClientDropdown(false) }}
+            >
+              <Plus className="h-4 w-4" /> Новый клиент
+            </button>
           </div>
         )}
+      </div>
+
+      {newClientMode && (
+        <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-800 space-y-2">
+          <Input placeholder="Имя клиента *" value={newClientName} onChange={(e) => setNewClientName(e.target.value)} />
+          <Input placeholder="Телефон" type="tel" value={newClientPhone} onChange={(e) => setNewClientPhone(e.target.value)} />
+          <div className="flex gap-2">
+            <Button type="button" size="sm" onClick={handleCreateClient} loading={createClient.isPending}>Добавить</Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => setNewClientMode(false)}>Отмена</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div>
+      <Header title="Новый заказ" showBack />
+
+      <form onSubmit={handleSubmit(onSubmit)} id="new-order-form">
+        <div className="px-4 md:px-6 py-4 max-w-5xl mx-auto">
+          {/* Desktop: 2 columns. Mobile: single column */}
+          <div className="md:grid md:grid-cols-2 md:gap-6 space-y-4 md:space-y-0">
+
+            {/* LEFT column */}
+            <div className="space-y-4">
+              <ClientSelector />
+
+              <Textarea
+                label="Что делаем *"
+                placeholder="Навес из профтрубы, 6×4 метра"
+                rows={4}
+                error={errors.title?.message}
+                {...register('title')}
+              />
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Сумма договора *"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="45000"
+                  error={errors.price?.message}
+                  {...register('price')}
+                />
+                <Input
+                  label="Аванс получен"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="0"
+                  {...register('prepayment')}
+                />
+              </div>
+            </div>
+
+            {/* RIGHT column */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Начало работ" type="date" {...register('start_date')} />
+                <Input label="Срок сдачи"   type="date" {...register('deadline')} />
+              </div>
+              <Input
+                label="Адрес объекта"
+                type="text"
+                placeholder="ул. Ленина 12, кв. 5"
+                {...register('address')}
+              />
+              <Textarea
+                label="Заметки / описание"
+                placeholder="Любые дополнительные пометки..."
+                rows={6}
+                {...register('description')}
+              />
+            </div>
+          </div>
+
+          {/* Submit — visible on desktop inline, fixed on mobile */}
+          <div className="hidden md:flex gap-3 mt-6 justify-end">
+            <Button variant="secondary" onClick={() => navigate(-1)}>Отмена</Button>
+            <Button type="submit" size="lg" loading={isSubmitting}>Создать заказ</Button>
+          </div>
+        </div>
       </form>
 
-      {/* Fixed bottom button */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-4">
-        <div className="max-w-lg mx-auto">
-          <Button
-            type="submit"
-            fullWidth
-            size="lg"
-            loading={isSubmitting}
-            onClick={handleSubmit(onSubmit)}
-          >
-            Сохранить заказ
-          </Button>
-        </div>
+      {/* Mobile fixed bottom button */}
+      <div className="fixed bottom-16 left-0 right-0 md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-4">
+        <Button
+          type="submit"
+          fullWidth
+          size="lg"
+          loading={isSubmitting}
+          onClick={handleSubmit(onSubmit)}
+        >
+          Создать заказ
+        </Button>
       </div>
     </div>
   )

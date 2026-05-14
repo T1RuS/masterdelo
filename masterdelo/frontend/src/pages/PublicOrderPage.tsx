@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import {
   MapPin, Calendar, CheckCircle2, Clock, XCircle, Package,
-  Phone, Download, MessageCircle, Send,
+  Phone, Download, MessageCircle, Send, Sun, Moon,
 } from 'lucide-react'
 import apiClient from '../api/client'
 import { formatMoney } from '../utils/formatters'
@@ -11,6 +11,7 @@ import { ORDER_STATUS_LABELS } from '../utils/constants'
 import type { OrderStatus } from '../types'
 import { format, parseISO } from 'date-fns'
 import { ru } from 'date-fns/locale'
+import { useThemeStore } from '../store/themeStore'
 
 interface Master {
   name: string
@@ -61,6 +62,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 export const PublicOrderPage: React.FC = () => {
   const { token = '' } = useParams()
   const navigate = useNavigate()
+  const { dark, toggle } = useThemeStore()
 
   const { data: order, isLoading, isError } = useQuery<PublicOrder>({
     queryKey: ['public-order', token],
@@ -111,12 +113,21 @@ export const PublicOrderPage: React.FC = () => {
           </div>
           <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">МастерДело</span>
         </div>
-        <button
-          onClick={() => navigate('/landing')}
-          className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
-        >
-          О сервисе
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggle}
+            className="p-1.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label="Переключить тему"
+          >
+            {dark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => navigate('/landing')}
+            className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            О сервисе
+          </button>
+        </div>
       </div>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">

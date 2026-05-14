@@ -59,7 +59,7 @@ export const DashboardPage: React.FC = () => {
             style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, white 0%, transparent 60%)' }}
           />
           <p className="text-indigo-200 text-sm mb-1">{today}</p>
-          <h1 className="text-2xl font-bold text-white mb-5">Привет, {name}!</h1>
+          <h1 className="text-2xl font-bold text-white mb-5">Здравствуйте, {name}!</h1>
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/10 backdrop-blur rounded-xl p-3">
               <div className="flex items-center gap-1.5 mb-1">

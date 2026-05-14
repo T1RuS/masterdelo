@@ -248,7 +248,7 @@ export const CalendarPage: React.FC = () => {
                             <div
                               key={o.id}
                               onClick={(e) => { e.stopPropagation(); navigate(`/orders/${o.id}`) }}
-                              className={`px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold truncate ${color} text-white`}
+                              className={`px-1.5 py-0.5 rounded text-[11px] leading-tight font-bold truncate ${color} text-white drop-shadow-sm`}
                               title={o.title}
                             >
                               {o.title}

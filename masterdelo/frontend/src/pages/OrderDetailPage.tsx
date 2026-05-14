@@ -170,12 +170,16 @@ export const OrderDetailPage: React.FC = () => {
       {/* Client */}
       {order.client && (
         <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Клиент</p>
-              <p className="font-semibold text-slate-900 dark:text-slate-100">{order.client.name}</p>
-            </div>
-            {order.client.phone && (
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">Клиент</p>
+          <p className="font-semibold text-slate-900 dark:text-slate-100 mb-1">{order.client.name}</p>
+          {order.client.phone && (
+            <div className="flex items-center justify-between mt-2">
+              <a
+                href={`tel:${order.client.phone}`}
+                className="text-base font-mono font-bold text-slate-800 dark:text-slate-100 tracking-wide hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+              >
+                {order.client.phone}
+              </a>
               <div className="flex gap-2">
                 <a href={`tel:${order.client.phone}`}
                   className="p-2.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
@@ -186,8 +190,8 @@ export const OrderDetailPage: React.FC = () => {
                   <MessageCircle className="h-5 w-5" />
                 </a>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </Card>
       )}
 

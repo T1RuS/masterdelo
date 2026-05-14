@@ -21,6 +21,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           text-slate-900 dark:text-slate-100
           placeholder:text-slate-400 dark:placeholder:text-slate-500
           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+          [&:-webkit-autofill]:[box-shadow:0_0_0_1000px_white_inset]
+          [&:-webkit-autofill]:[-webkit-text-fill-color:#0f172a]
+          dark:[&:-webkit-autofill]:[box-shadow:0_0_0_1000px_#1e293b_inset]
+          dark:[&:-webkit-autofill]:[-webkit-text-fill-color:#f1f5f9]
           ${error
             ? 'border-red-400 bg-red-50 dark:bg-red-950/30'
             : 'border-slate-200 dark:border-slate-600'}
