@@ -204,7 +204,7 @@ export const CalendarPage: React.FC = () => {
                       key={di}
                       onClick={() => handleDayClick(day)}
                       className={`
-                        min-h-[64px] md:min-h-[76px] p-1 rounded-xl text-left transition-all duration-100 relative overflow-hidden
+                        min-h-[80px] md:min-h-[96px] p-1.5 rounded-xl text-left transition-all duration-100 relative overflow-hidden
                         ${!inMonth ? 'opacity-20 pointer-events-none' : ''}
                         ${todayDay
                           ? 'bg-indigo-600 ring-2 ring-indigo-400'
@@ -212,7 +212,7 @@ export const CalendarPage: React.FC = () => {
                       `}
                     >
                       <span className={`
-                        text-xs font-bold block text-center leading-tight mb-0.5
+                        text-sm font-bold block text-center leading-tight mb-1
                         ${todayDay ? 'text-white' : isWeekend ? 'text-red-500 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}
                       `}>
                         {format(day, 'd')}
@@ -230,15 +230,15 @@ export const CalendarPage: React.FC = () => {
                                 key={o.id}
                                 onClick={(e) => { e.stopPropagation(); navigate(`/orders/${o.id}`) }}
                                 title={o.title}
-                                className={`h-[10px] relative cursor-pointer
-                                  ${rStart ? 'rounded-l-full ml-0' : '-ml-1'}
-                                  ${rEnd ? 'rounded-r-full mr-0' : '-mr-1'}
+                                className={`h-[14px] relative cursor-pointer
+                                  ${rStart ? 'rounded-l-full ml-0' : '-ml-1.5'}
+                                  ${rEnd ? 'rounded-r-full mr-0' : '-mr-1.5'}
                                   ${todayDay ? 'bg-white/30' : bgColor}
                                 `}
                               >
                                 {rStart && (
-                                  <span className={`absolute left-1 top-0 text-[8px] leading-[10px] font-bold truncate text-white px-0.5 ${color} rounded-sm`}>
-                                    {o.title.slice(0, 6)}
+                                  <span className="absolute left-1.5 top-0 text-[10px] leading-[14px] font-bold truncate text-white max-w-full pr-1">
+                                    {o.title.slice(0, 8)}
                                   </span>
                                 )}
                               </div>
@@ -248,7 +248,7 @@ export const CalendarPage: React.FC = () => {
                             <div
                               key={o.id}
                               onClick={(e) => { e.stopPropagation(); navigate(`/orders/${o.id}`) }}
-                              className={`px-1 py-px rounded text-[9px] leading-tight font-semibold truncate ${color} text-white`}
+                              className={`px-1.5 py-0.5 rounded text-[10px] leading-tight font-semibold truncate ${color} text-white`}
                               title={o.title}
                             >
                               {o.title}
@@ -256,7 +256,7 @@ export const CalendarPage: React.FC = () => {
                           )
                         })}
                         {(dayOrders.length + spanOrders.length) > 3 && (
-                          <div className={`text-[8px] font-medium text-center ${todayDay ? 'text-indigo-200' : 'text-slate-400'}`}>
+                          <div className={`text-[10px] font-semibold text-center ${todayDay ? 'text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>
                             +{dayOrders.length + spanOrders.length - 3}
                           </div>
                         )}

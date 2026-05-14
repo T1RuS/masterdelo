@@ -19,6 +19,10 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = None
     company_name: Optional[str] = None
     inn: Optional[str] = None
+    telegram: Optional[str] = None
+    vk: Optional[str] = None
+    max_messenger: Optional[str] = None
+    tax_rate: Optional[float] = None
 
 
 class UserOut(BaseModel):
@@ -28,6 +32,11 @@ class UserOut(BaseModel):
     phone: Optional[str] = None
     company_name: Optional[str] = None
     inn: Optional[str] = None
+    telegram: Optional[str] = None
+    vk: Optional[str] = None
+    max_messenger: Optional[str] = None
+    is_admin: bool = False
+    tax_rate: float = 4.0
     created_at: datetime
 
     model_config = {"from_attributes": True}

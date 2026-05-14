@@ -16,6 +16,7 @@ import { CalendarPage } from './pages/CalendarPage'
 import { LandingPage } from './pages/LandingPage'
 import { EditOrderPage } from './pages/EditOrderPage'
 import { PublicOrderPage } from './pages/PublicOrderPage'
+import { AdminPage } from './pages/AdminPage'
 import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ const App: React.FC = () => (
             <Route path="finance" element={<FinancePage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="calendar" element={<CalendarPage />} />
+            <Route path="admin" element={<AdminPage />} />
           </Route>
         </Routes>
       </ToastProvider>

@@ -5,6 +5,11 @@ export interface User {
   phone: string | null
   company_name: string | null
   inn: string | null
+  telegram: string | null
+  vk: string | null
+  max_messenger: string | null
+  is_admin: boolean
+  tax_rate: number
   created_at: string
 }
 

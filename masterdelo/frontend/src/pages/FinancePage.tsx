@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import { startOfWeek, startOfMonth } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { TrendingUp, Wallet, AlertCircle, Download } from 'lucide-react'
+import { TrendingUp, Wallet, AlertCircle, Download, Receipt } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { PageSpinner } from '../components/ui/Spinner'
 import { OrderStatusBadge } from '../components/ui/Badge'
 import { useOrders } from '../hooks/useOrders'
+import { useAuthStore } from '../store/authStore'
 import { formatMoney, formatDateShort } from '../utils/formatters'
 import { ORDER_STATUS_LABELS } from '../utils/constants'
 import type { OrderStatus } from '../types'
@@ -44,8 +45,11 @@ const PERIODS = [
 
 export const FinancePage: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const [period, setPeriod] = useState<Period>('month')
   const { data: allOrders = [], isLoading } = useOrders()
+
+  const taxRate = user?.tax_rate ?? 4
 
   const filterByPeriod = (orders: typeof allOrders) => {
     if (period === 'all') return orders
@@ -67,6 +71,10 @@ export const FinancePage: React.FC = () => {
   const debts = allOrders.filter(
     (o) => ['done', 'paid'].includes(o.status) && o.price - o.prepayment > 0
   )
+
+  const paidOrders = periodOrders.filter((o) => o.status === 'paid')
+  const taxBase = paidOrders.reduce((s, o) => s + o.price, 0)
+  const taxAmount = (taxBase * taxRate) / 100
 
   return (
     <div>
@@ -105,7 +113,7 @@ export const FinancePage: React.FC = () => {
           <PageSpinner />
         ) : (
           <>
-            {/* Metrics */}
+            {/* Revenue metrics */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -122,6 +130,44 @@ export const FinancePage: React.FC = () => {
                 <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatMoney(inWork)}</p>
               </div>
             </div>
+
+            {/* НПД tax block */}
+            {paidOrders.length > 0 && (
+              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl border border-amber-200 dark:border-amber-900/50 p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Receipt className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <h2 className="font-semibold text-amber-800 dark:text-amber-300">
+                    Налог НПД — ставка {taxRate}%
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mb-3">
+                  <div>
+                    <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mb-1">Налоговая база</p>
+                    <p className="font-bold text-amber-900 dark:text-amber-200">{formatMoney(taxBase)}</p>
+                    <p className="text-[10px] text-amber-600/60 dark:text-amber-400/60 mt-0.5">
+                      доход от оплаченных заказов
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mb-1">Ставка</p>
+                    <p className="font-bold text-amber-900 dark:text-amber-200">{taxRate}%</p>
+                    <p className="text-[10px] text-amber-600/60 dark:text-amber-400/60 mt-0.5">
+                      из профиля
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mb-1">К уплате</p>
+                    <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">{formatMoney(taxAmount)}</p>
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-amber-600/70 dark:text-amber-400/60">
+                  Расчёт: {formatMoney(taxBase)} × {taxRate}% = {formatMoney(taxAmount)}.
+                  Ставку НПД можно изменить в настройках профиля.
+                </p>
+              </div>
+            )}
 
             {/* Debts */}
             {debts.length > 0 && (
@@ -172,6 +218,11 @@ export const FinancePage: React.FC = () => {
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatMoney(o.price)}</p>
+                        {o.status === 'paid' && (
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
+                            НПД: {formatMoney((o.price * taxRate) / 100)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
