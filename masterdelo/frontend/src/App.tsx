@@ -12,6 +12,8 @@ import { ClientsPage } from './pages/ClientsPage'
 import { ClientDetailPage } from './pages/ClientDetailPage'
 import { FinancePage } from './pages/FinancePage'
 import { ProfilePage } from './pages/ProfilePage'
+import { CalendarPage } from './pages/CalendarPage'
+import { LandingPage } from './pages/LandingPage'
 import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient({
@@ -31,6 +33,7 @@ const App: React.FC = () => (
     <BrowserRouter>
       <ToastProvider>
         <Routes>
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route
@@ -48,6 +51,7 @@ const App: React.FC = () => (
             <Route path="clients/:id" element={<ClientDetailPage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="profile" element={<ProfilePage />} />
+            <Route path="calendar" element={<CalendarPage />} />
           </Route>
         </Routes>
       </ToastProvider>

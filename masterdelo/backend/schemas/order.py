@@ -18,6 +18,7 @@ class OrderCreate(BaseModel):
     client_id: Optional[str] = None
     price: float = 0.0
     prepayment: float = 0.0
+    start_date: Optional[date] = None
     deadline: Optional[date] = None
     address: Optional[str] = None
     description: Optional[str] = None
@@ -31,6 +32,7 @@ class OrderUpdate(BaseModel):
     status: Optional[str] = None
     price: Optional[float] = None
     prepayment: Optional[float] = None
+    start_date: Optional[date] = None
     deadline: Optional[date] = None
     address: Optional[str] = None
     notes: Optional[str] = None
@@ -49,6 +51,7 @@ class OrderOut(BaseModel):
     status: str
     price: float
     prepayment: float
+    start_date: Optional[date] = None
     deadline: Optional[date] = None
     address: Optional[str] = None
     notes: Optional[str] = None

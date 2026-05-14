@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Phone, Search } from 'lucide-react'
+import { Plus, Phone, Search, Users } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { Button } from '../components/ui/Button'
-import { Card } from '../components/ui/Card'
 import { EmptyState } from '../components/ui/EmptyState'
 import { PageSpinner } from '../components/ui/Spinner'
 import { Modal } from '../components/ui/Modal'
@@ -40,7 +39,7 @@ export const ClientsPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div>
       <Header
         title="Клиенты"
         actions={
@@ -50,12 +49,12 @@ export const ClientsPage: React.FC = () => {
         }
       />
 
-      <div className="px-4 pt-3 pb-4 space-y-3">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 pt-3 pb-4 space-y-3">
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
-            className="w-full h-12 pl-10 pr-4 rounded-xl border border-gray-200 bg-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-12 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors"
             placeholder="Поиск по имени или телефону"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -75,35 +74,40 @@ export const ClientsPage: React.FC = () => {
             }
           />
         ) : (
-          filtered.map((client) => (
-            <Card key={client.id} onClick={() => navigate(`/clients/${client.id}`)}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900">{client.name}</p>
-                  {client.phone && (
-                    <a
-                      href={`tel:${client.phone}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1 text-sm text-gray-500 mt-0.5"
-                    >
-                      <Phone className="h-3.5 w-3.5" />
-                      {client.phone}
-                    </a>
-                  )}
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm text-gray-500">
-                    {client.orders_count || 0} заказ{(client.orders_count || 0) === 1 ? '' : 'ов'}
-                  </p>
-                  {(client.total_amount || 0) > 0 && (
-                    <p className="text-sm font-medium text-gray-900">
-                      {formatMoney(client.total_amount || 0)}
+          <div className="space-y-2 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 lg:grid-cols-3">
+            {filtered.map((client) => (
+              <button
+                key={client.id}
+                onClick={() => navigate(`/clients/${client.id}`)}
+                className="w-full text-left bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all duration-150 active:scale-[0.98]"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
+                    <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{client.name}</p>
+                    {client.phone && (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Phone className="h-3 w-3 text-slate-400 dark:text-slate-500" />
+                        <span className="text-sm text-slate-500 dark:text-slate-400">{client.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
+                      {client.orders_count || 0} заказ{(client.orders_count || 0) === 1 ? '' : 'ов'}
                     </p>
-                  )}
+                    {(client.total_amount || 0) > 0 && (
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 mt-0.5">
+                        {formatMoney(client.total_amount || 0)}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </Card>
-          ))
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

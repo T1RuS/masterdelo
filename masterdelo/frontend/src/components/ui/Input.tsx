@@ -9,17 +9,26 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className = '', ...props }, ref) => (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          {label}
+        </label>
       )}
       <input
         ref={ref}
-        className={`w-full h-12 px-4 rounded-xl border text-base transition-colors
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-          ${error ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}
-          ${className}`}
+        className={`
+          w-full h-12 px-4 rounded-xl border text-base transition-colors
+          bg-white dark:bg-slate-800
+          text-slate-900 dark:text-slate-100
+          placeholder:text-slate-400 dark:placeholder:text-slate-500
+          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+          ${error
+            ? 'border-red-400 bg-red-50 dark:bg-red-950/30'
+            : 'border-slate-200 dark:border-slate-600'}
+          ${className}
+        `}
         {...props}
       />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
   )
 )
@@ -35,17 +44,26 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ label, error, className = '', ...props }, ref) => (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          {label}
+        </label>
       )}
       <textarea
         ref={ref}
-        className={`w-full px-4 py-3 rounded-xl border text-base transition-colors resize-none
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-          ${error ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-white'}
-          ${className}`}
+        className={`
+          w-full px-4 py-3 rounded-xl border text-base transition-colors resize-none
+          bg-white dark:bg-slate-800
+          text-slate-900 dark:text-slate-100
+          placeholder:text-slate-400 dark:placeholder:text-slate-500
+          focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+          ${error
+            ? 'border-red-400 bg-red-50 dark:bg-red-950/30'
+            : 'border-slate-200 dark:border-slate-600'}
+          ${className}
+        `}
         {...props}
       />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{error}</p>}
     </div>
   )
 )

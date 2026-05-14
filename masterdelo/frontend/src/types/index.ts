@@ -53,6 +53,7 @@ export interface Order {
   status: OrderStatus
   price: number
   prepayment: number
+  start_date: string | null
   deadline: string | null
   address: string | null
   notes: string | null
@@ -75,6 +76,7 @@ export interface OrderCreateData {
   client_id?: string | null
   price: number
   prepayment?: number
+  start_date?: string | null
   deadline?: string | null
   address?: string | null
   description?: string | null
@@ -88,6 +90,7 @@ export interface OrderUpdateData {
   status?: OrderStatus
   price?: number
   prepayment?: number
+  start_date?: string | null
   deadline?: string | null
   address?: string | null
   notes?: string | null

@@ -30,14 +30,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const icons = {
     success: <CheckCircle className="h-5 w-5 text-green-500" />,
-    error: <XCircle className="h-5 w-5 text-red-500" />,
-    info: <Info className="h-5 w-5 text-blue-500" />,
+    error:   <XCircle className="h-5 w-5 text-red-500" />,
+    info:    <Info className="h-5 w-5 text-indigo-500" />,
   }
 
   const bg = {
-    success: 'bg-green-50 border-green-200',
-    error: 'bg-red-50 border-red-200',
-    info: 'bg-blue-50 border-blue-200',
+    success: 'bg-white dark:bg-slate-800 border-green-200 dark:border-green-800',
+    error:   'bg-white dark:bg-slate-800 border-red-200 dark:border-red-800',
+    info:    'bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-800',
   }
 
   return (
@@ -47,12 +47,12 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`flex items-start gap-3 p-3 rounded-xl border shadow-lg ${bg[t.type]} animate-slide-down`}
+            className={`flex items-start gap-3 p-3 rounded-xl border shadow-xl ${bg[t.type]} animate-slide-down`}
           >
             {icons[t.type]}
-            <p className="text-sm text-gray-800 flex-1">{t.message}</p>
+            <p className="text-sm text-slate-800 dark:text-slate-100 flex-1">{t.message}</p>
             <button onClick={() => remove(t.id)} className="shrink-0">
-              <X className="h-4 w-4 text-gray-400" />
+              <X className="h-4 w-4 text-slate-400" />
             </button>
           </div>
         ))}

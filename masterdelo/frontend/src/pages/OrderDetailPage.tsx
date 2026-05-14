@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Phone, MessageCircle, MapPin, MoreVertical, Trash2, Edit, Plus, X, Download } from 'lucide-react'
+import { Phone, MessageCircle, MapPin, MoreVertical, Trash2, Edit, Plus, X, Download, Loader2 } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { OrderStatusBadge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -13,6 +13,7 @@ import { useCreateOrderItem, useDeleteOrderItem } from '../hooks/useOrderItems'
 import { formatMoney, formatDate, formatDeadline, whatsappLink } from '../utils/formatters'
 import { ORDER_STATUS_LABELS, ALLOWED_TRANSITIONS, PHOTO_STAGE_LABELS } from '../utils/constants'
 import { photosApi } from '../api/photos'
+import { pdfApi } from '../api/pdf'
 import { useQueryClient } from '@tanstack/react-query'
 import type { OrderStatus, Photo } from '../types'
 
@@ -36,6 +37,7 @@ export const OrderDetailPage: React.FC = () => {
   const [photoStage, setPhotoStage] = useState<PhotoStage>('process')
   const [viewPhoto, setViewPhoto] = useState<Photo | null>(null)
   const [itemForm, setItemForm] = useState({ name: '', quantity: '1', unit: '', cost: '' })
+  const [pdfLoading, setPdfLoading] = useState<'invoice' | 'act' | null>(null)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -64,10 +66,10 @@ export const OrderDetailPage: React.FC = () => {
     if (!itemForm.name.trim()) return
     try {
       await createItem.mutateAsync({
-        name: itemForm.name,
+        name:     itemForm.name,
         quantity: parseFloat(itemForm.quantity) || 1,
-        unit: itemForm.unit || undefined,
-        cost: parseFloat(itemForm.cost) || 0,
+        unit:     itemForm.unit || undefined,
+        cost:     parseFloat(itemForm.cost) || 0,
       })
       setItemForm({ name: '', quantity: '1', unit: '', cost: '' })
       setAddItemOpen(false)
@@ -102,12 +104,32 @@ export const OrderDetailPage: React.FC = () => {
     }
   }
 
+  const handleDownloadPdf = async (type: 'invoice' | 'act') => {
+    setPdfLoading(type)
+    try {
+      if (type === 'invoice') await pdfApi.downloadInvoice(id)
+      else await pdfApi.downloadAct(id)
+    } catch {
+      showToast('Ошибка генерации PDF', 'error')
+    } finally {
+      setPdfLoading(null)
+    }
+  }
+
   if (isLoading) return <PageSpinner />
-  if (!order) return <div className="p-4 text-center text-gray-500">Заказ не найден</div>
+  if (!order) return (
+    <div className="p-4 text-center text-slate-500 dark:text-slate-400">Заказ не найден</div>
+  )
 
   const deadline = formatDeadline(order.deadline)
   const allowedStatuses = ALLOWED_TRANSITIONS[order.status]
   const photosByStage = (stage: PhotoStage) => order.photos.filter((p) => p.stage === stage)
+
+  const inputCls = `w-full h-12 px-4 rounded-xl border text-base transition-colors
+    bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+    placeholder:text-slate-400 dark:placeholder:text-slate-500
+    border-slate-200 dark:border-slate-600
+    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -117,21 +139,21 @@ export const OrderDetailPage: React.FC = () => {
         actions={
           <div className="relative">
             <button
-              className="p-2 rounded-xl hover:bg-gray-100"
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800"
               onClick={() => setMenuOpen(!menuOpen)}
             >
-              <MoreVertical className="h-5 w-5 text-gray-600" />
+              <MoreVertical className="h-5 w-5 text-slate-600 dark:text-slate-300" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-20 w-40">
+              <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 z-20 w-44">
                 <button
-                  className="w-full px-4 py-3 text-left flex items-center gap-2 hover:bg-gray-50 text-sm"
+                  className="w-full px-4 py-3 text-left flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm text-slate-800 dark:text-slate-200"
                   onClick={() => { setMenuOpen(false); navigate(`/orders/${id}/edit`) }}
                 >
                   <Edit className="h-4 w-4" /> Редактировать
                 </button>
                 <button
-                  className="w-full px-4 py-3 text-left flex items-center gap-2 hover:bg-red-50 text-red-600 text-sm"
+                  className="w-full px-4 py-3 text-left flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 text-sm"
                   onClick={handleDelete}
                 >
                   <Trash2 className="h-4 w-4" /> Удалить
@@ -149,7 +171,7 @@ export const OrderDetailPage: React.FC = () => {
             <OrderStatusBadge status={order.status} className="text-sm px-3 py-1" />
           </button>
           {allowedStatuses.length > 0 && (
-            <span className="text-xs text-gray-400">Нажмите для смены</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">Нажмите для смены</span>
           )}
         </div>
 
@@ -158,23 +180,17 @@ export const OrderDetailPage: React.FC = () => {
           <Card>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-400 mb-0.5">Клиент</p>
-                <p className="font-semibold text-gray-900">{order.client.name}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500 mb-0.5">Клиент</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{order.client.name}</p>
               </div>
               {order.client.phone && (
                 <div className="flex gap-2">
-                  <a
-                    href={`tel:${order.client.phone}`}
-                    className="p-2.5 bg-blue-50 rounded-xl text-blue-600"
-                  >
+                  <a href={`tel:${order.client.phone}`}
+                    className="p-2.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl text-indigo-600 dark:text-indigo-400">
                     <Phone className="h-5 w-5" />
                   </a>
-                  <a
-                    href={whatsappLink(order.client.phone)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-2.5 bg-green-50 rounded-xl text-green-600"
-                  >
+                  <a href={whatsappLink(order.client.phone)} target="_blank" rel="noreferrer"
+                    className="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-xl text-green-600 dark:text-green-400">
                     <MessageCircle className="h-5 w-5" />
                   </a>
                 </div>
@@ -185,53 +201,68 @@ export const OrderDetailPage: React.FC = () => {
 
         {/* Finance */}
         <Card>
-          <p className="text-xs text-gray-400 mb-3">Финансы</p>
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">Финансы</p>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <p className="text-xs text-gray-500 mb-1">Договор</p>
-              <p className="font-bold text-gray-900">{formatMoney(order.price)}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Договор</p>
+              <p className="font-bold text-slate-900 dark:text-slate-100">{formatMoney(order.price)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">Аванс</p>
-              <p className="font-bold text-gray-900">{formatMoney(order.prepayment)}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Аванс</p>
+              <p className="font-bold text-slate-900 dark:text-slate-100">{formatMoney(order.prepayment)}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500 mb-1">К получению</p>
-              <p className={`font-bold ${order.balance_due > 0 ? 'text-blue-600' : 'text-gray-900'}`}>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">К получению</p>
+              <p className={`font-bold ${order.balance_due > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-slate-100'}`}>
                 {formatMoney(order.balance_due)}
               </p>
             </div>
           </div>
           {order.total_cost > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <p className="text-sm text-gray-600">
-                Материалы: <span className="font-medium">{formatMoney(order.total_cost)}</span>
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Материалы: <span className="font-medium text-slate-800 dark:text-slate-200">{formatMoney(order.total_cost)}</span>
                 {' → '}
-                Прибыль: <span className="font-semibold text-green-600">{formatMoney(order.margin)}</span>
+                Прибыль: <span className="font-semibold text-green-600 dark:text-green-400">{formatMoney(order.margin)}</span>
               </p>
             </div>
           )}
         </Card>
 
-        {/* Deadline */}
-        {order.deadline && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">Срок:</span>
-            <span className={`text-sm font-medium ${deadline.color}`}>{deadline.label}</span>
+        {/* Dates */}
+        {(order.start_date || order.deadline) && (
+          <div className="flex items-center gap-4">
+            {order.start_date && (
+              <div>
+                <span className="text-xs text-slate-400 dark:text-slate-500 block mb-0.5">Начало</span>
+                <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  {formatDate(order.start_date)}
+                </span>
+              </div>
+            )}
+            {order.start_date && order.deadline && (
+              <div className="text-slate-300 dark:text-slate-600">→</div>
+            )}
+            {order.deadline && (
+              <div>
+                <span className="text-xs text-slate-400 dark:text-slate-500 block mb-0.5">Срок</span>
+                <span className={`text-sm font-medium ${deadline.color}`}>{deadline.label}</span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Address */}
         {order.address && (
           <div className="flex items-start gap-2">
-            <MapPin className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+            <MapPin className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
             <div className="flex-1">
-              <span className="text-sm text-gray-700">{order.address}</span>
+              <span className="text-sm text-slate-700 dark:text-slate-300">{order.address}</span>
               <a
                 href={`https://maps.yandex.ru/?text=${encodeURIComponent(order.address)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="block text-xs text-blue-600 mt-0.5"
+                className="block text-xs text-indigo-600 dark:text-indigo-400 mt-0.5"
               >
                 Открыть в Яндекс.Картах
               </a>
@@ -242,17 +273,17 @@ export const OrderDetailPage: React.FC = () => {
         {/* Description */}
         {order.description && (
           <div>
-            <p className="text-xs text-gray-400 mb-1">Описание</p>
-            <p className="text-sm text-gray-700 whitespace-pre-wrap">{order.description}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mb-1">Описание</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{order.description}</p>
           </div>
         )}
 
         {/* Materials */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-gray-900">Смета материалов</h2>
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">Смета материалов</h2>
             <button
-              className="flex items-center gap-1 text-blue-600 text-sm font-medium"
+              className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400 text-sm font-medium"
               onClick={() => setAddItemOpen(true)}
             >
               <Plus className="h-4 w-4" /> Добавить
@@ -260,29 +291,29 @@ export const OrderDetailPage: React.FC = () => {
           </div>
 
           {order.items.length === 0 ? (
-            <p className="text-sm text-gray-400 py-2">Материалы не добавлены</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 py-2">Материалы не добавлены</p>
           ) : (
             <div className="space-y-2">
               {order.items.map((item) => (
-                <div key={item.id} className="flex items-center gap-2 py-2 border-b border-gray-50">
+                <div key={item.id} className="flex items-center gap-2 py-2 border-b border-slate-50 dark:border-slate-800">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{item.name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {item.quantity} {item.unit || 'шт'} × {formatMoney(item.cost)}
                     </p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-900 shrink-0">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 shrink-0">
                     {formatMoney(item.quantity * item.cost)}
                   </p>
                   <button
-                    className="p-1.5 text-gray-300 hover:text-red-500"
+                    className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-red-500"
                     onClick={() => deleteItem.mutate(item.id)}
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
               ))}
-              <div className="flex justify-between py-2 font-semibold text-gray-900">
+              <div className="flex justify-between py-2 font-semibold text-slate-900 dark:text-slate-100">
                 <span>Итого материалы</span>
                 <span>{formatMoney(order.total_cost)}</span>
               </div>
@@ -292,16 +323,17 @@ export const OrderDetailPage: React.FC = () => {
 
         {/* Photos */}
         <div>
-          <h2 className="font-semibold text-gray-900 mb-3">Фото</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Фото</h2>
 
-          {/* Stage tabs */}
           <div className="flex gap-2 mb-3">
             {(['before', 'process', 'after'] as PhotoStage[]).map((s) => (
               <button
                 key={s}
                 onClick={() => setPhotoStage(s)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors
-                  ${photoStage === s ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                  ${photoStage === s
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}
               >
                 {PHOTO_STAGE_LABELS[s]}
               </button>
@@ -312,14 +344,10 @@ export const OrderDetailPage: React.FC = () => {
             {photosByStage(photoStage).map((photo) => (
               <button
                 key={photo.id}
-                className="aspect-square rounded-xl overflow-hidden bg-gray-100"
+                className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800"
                 onClick={() => setViewPhoto(photo)}
               >
-                <img
-                  src={photo.file_path}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+                <img src={photo.file_path} alt="" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -333,11 +361,7 @@ export const OrderDetailPage: React.FC = () => {
             className="hidden"
             onChange={handlePhotoUpload}
           />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => fileInputRef.current?.click()}
-          >
+          <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
             <Plus className="h-4 w-4 mr-1" />
             Добавить фото
           </Button>
@@ -345,30 +369,28 @@ export const OrderDetailPage: React.FC = () => {
       </div>
 
       {/* PDF buttons */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-56 bg-white border-t border-gray-100 p-4">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-100 dark:border-slate-800 p-4">
         <div className="max-w-2xl mx-auto flex gap-3">
-          <a
-            href={`/api/pdf/invoice/${id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex-1"
+          <Button
+            variant="secondary"
+            fullWidth
+            size="md"
+            loading={pdfLoading === 'invoice'}
+            onClick={() => handleDownloadPdf('invoice')}
           >
-            <Button variant="secondary" fullWidth size="md">
-              <Download className="h-4 w-4 mr-2" />
-              Счёт (PDF)
-            </Button>
-          </a>
-          <a
-            href={`/api/pdf/act/${id}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex-1"
+            {pdfLoading === 'invoice' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Счёт (PDF)
+          </Button>
+          <Button
+            variant="secondary"
+            fullWidth
+            size="md"
+            loading={pdfLoading === 'act'}
+            onClick={() => handleDownloadPdf('act')}
           >
-            <Button variant="secondary" fullWidth size="md">
-              <Download className="h-4 w-4 mr-2" />
-              Акт (PDF)
-            </Button>
-          </a>
+            {pdfLoading === 'act' ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Акт (PDF)
+          </Button>
         </div>
       </div>
 
@@ -378,7 +400,7 @@ export const OrderDetailPage: React.FC = () => {
           {allowedStatuses.map((s) => (
             <button
               key={s}
-              className="w-full text-left px-4 py-3 rounded-xl hover:bg-gray-50 font-medium text-gray-800"
+              className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-slate-800 dark:text-slate-200"
               onClick={() => handleStatusChange(s)}
             >
               {ORDER_STATUS_LABELS[s]}
@@ -391,14 +413,14 @@ export const OrderDetailPage: React.FC = () => {
       <BottomSheet open={addItemOpen} onClose={() => setAddItemOpen(false)} title="Добавить материал">
         <div className="space-y-3">
           <input
-            className="w-full h-12 px-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={inputCls}
             placeholder="Название *"
             value={itemForm.name}
             onChange={(e) => setItemForm({ ...itemForm, name: e.target.value })}
           />
           <div className="flex gap-2">
             <input
-              className="flex-1 h-12 px-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`flex-1 ${inputCls}`}
               placeholder="Кол-во"
               type="number"
               inputMode="decimal"
@@ -406,14 +428,14 @@ export const OrderDetailPage: React.FC = () => {
               onChange={(e) => setItemForm({ ...itemForm, quantity: e.target.value })}
             />
             <input
-              className="w-24 h-12 px-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-24 ${inputCls}`}
               placeholder="Ед."
               value={itemForm.unit}
               onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })}
             />
           </div>
           <input
-            className="w-full h-12 px-4 rounded-xl border border-gray-200 text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={inputCls}
             placeholder="Цена (за ед.)"
             type="number"
             inputMode="decimal"

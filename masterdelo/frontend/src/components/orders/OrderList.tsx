@@ -8,6 +8,7 @@ interface Props {
   emptyTitle?: string
   emptyDescription?: string
   emptyAction?: React.ReactNode
+  listClassName?: string
 }
 
 export const OrderList: React.FC<Props> = ({
@@ -15,13 +16,14 @@ export const OrderList: React.FC<Props> = ({
   emptyTitle = 'Заказов нет',
   emptyDescription = 'Добавьте первый заказ, чтобы начать работу',
   emptyAction,
+  listClassName,
 }) => {
   if (orders.length === 0) {
     return <EmptyState title={emptyTitle} description={emptyDescription} action={emptyAction} />
   }
 
   return (
-    <div className="space-y-3">
+    <div className={listClassName ?? 'space-y-3'}>
       {orders.map((order) => (
         <OrderCard key={order.id} order={order} />
       ))}

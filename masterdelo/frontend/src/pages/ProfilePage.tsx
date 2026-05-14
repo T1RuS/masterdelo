@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { LogOut } from 'lucide-react'
+import { LogOut, Moon, Sun } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { useToast } from '../components/ui/Toast'
 import { useAuthStore } from '../store/authStore'
+import { useThemeStore } from '../store/themeStore'
 import { authApi } from '../api/auth'
 import { useNavigate } from 'react-router-dom'
 
@@ -20,6 +21,7 @@ export const ProfilePage: React.FC = () => {
   const navigate = useNavigate()
   const { user, setUser, logout } = useAuthStore()
   const { showToast } = useToast()
+  const { dark, toggle } = useThemeStore()
 
   const {
     register,
@@ -31,10 +33,10 @@ export const ProfilePage: React.FC = () => {
   useEffect(() => {
     if (user) {
       reset({
-        full_name: user.full_name || '',
-        phone: user.phone || '',
+        full_name:    user.full_name || '',
+        phone:        user.phone || '',
         company_name: user.company_name || '',
-        inn: user.inn || '',
+        inn:          user.inn || '',
       })
     }
   }, [user, reset])
@@ -59,8 +61,32 @@ export const ProfilePage: React.FC = () => {
       <Header title="Профиль" />
 
       <div className="px-4 py-4 space-y-4">
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
-          <h2 className="font-semibold text-gray-900">Личные данные</h2>
+        {/* Theme toggle */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {dark ? <Moon className="h-5 w-5 text-indigo-400" /> : <Sun className="h-5 w-5 text-amber-500" />}
+            <div>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                {dark ? 'Тёмная тема' : 'Светлая тема'}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Переключить оформление</p>
+            </div>
+          </div>
+          <button
+            onClick={toggle}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none
+              ${dark ? 'bg-indigo-600' : 'bg-slate-300'}`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform
+                ${dark ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+          </button>
+        </div>
+
+        {/* Profile form */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Личные данные</h2>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input label="Имя" placeholder="Иван Иванов" {...register('full_name')} />
@@ -74,8 +100,8 @@ export const ProfilePage: React.FC = () => {
           </form>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <p className="text-sm text-gray-500 mb-3">{user?.email}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{user?.email}</p>
           <Button variant="danger" fullWidth onClick={handleLogout}>
             <LogOut className="h-4 w-4 mr-2" />
             Выйти

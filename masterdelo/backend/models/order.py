@@ -16,6 +16,7 @@ class Order(Base):
     status: Mapped[str] = mapped_column(String(50), default="new")
     price: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
     prepayment: Mapped[float] = mapped_column(Numeric(12, 2), default=0)
+    start_date: Mapped[date | None] = mapped_column(Date)
     deadline: Mapped[date | None] = mapped_column(Date)
     address: Mapped[str | None] = mapped_column(String(500))
     notes: Mapped[str | None] = mapped_column(Text)

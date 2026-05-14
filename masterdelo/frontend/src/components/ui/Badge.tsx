@@ -9,7 +9,7 @@ interface BadgeProps {
 
 export const OrderStatusBadge: React.FC<BadgeProps> = ({ status, className = '' }) => (
   <span
-    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ORDER_STATUS_COLORS[status]} ${className}`}
+    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${ORDER_STATUS_COLORS[status]} ${className}`}
   >
     {ORDER_STATUS_LABELS[status]}
   </span>
@@ -22,7 +22,7 @@ interface SimpleBadgeProps {
 
 export const Badge: React.FC<SimpleBadgeProps> = ({ children, className = '' }) => (
   <span
-    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 ${className}`}
+    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 ${className}`}
   >
     {children}
   </span>

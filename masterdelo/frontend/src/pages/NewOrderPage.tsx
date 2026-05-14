@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,12 +12,13 @@ import { useClients, useCreateClient } from '../hooks/useClients'
 import { useToast } from '../components/ui/Toast'
 
 const schema = z.object({
-  title: z.string().min(1, 'Введите описание работ'),
-  price: z.coerce.number().min(0, 'Введите сумму'),
-  client_id: z.string().optional(),
+  title:      z.string().min(1, 'Введите описание работ'),
+  price:      z.coerce.number().min(0, 'Введите сумму'),
+  client_id:  z.string().optional(),
   prepayment: z.coerce.number().optional(),
-  deadline: z.string().optional(),
-  address: z.string().optional(),
+  start_date: z.string().optional(),
+  deadline:   z.string().optional(),
+  address:    z.string().optional(),
   description: z.string().optional(),
 })
 
@@ -25,8 +26,10 @@ type FormData = z.infer<typeof schema>
 
 export const NewOrderPage: React.FC = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const defaultDate = searchParams.get('date') || ''
   const { showToast } = useToast()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(!!defaultDate)
   const [newClientMode, setNewClientMode] = useState(false)
   const [newClientName, setNewClientName] = useState('')
   const [newClientPhone, setNewClientPhone] = useState('')
@@ -43,7 +46,10 @@ export const NewOrderPage: React.FC = () => {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: { deadline: defaultDate },
+  })
 
   const selectedClientId = watch('client_id')
   const selectedClient = clients.find((c) => c.id === selectedClientId)
@@ -70,10 +76,11 @@ export const NewOrderPage: React.FC = () => {
     try {
       const order = await createOrder.mutateAsync({
         ...data,
-        prepayment: data.prepayment || 0,
-        client_id: data.client_id || null,
-        deadline: data.deadline || null,
-        address: data.address || null,
+        prepayment:  data.prepayment || 0,
+        client_id:   data.client_id || null,
+        start_date:  data.start_date || null,
+        deadline:    data.deadline || null,
+        address:     data.address || null,
         description: data.description || null,
       })
       showToast('Заказ создан', 'success')
@@ -83,6 +90,12 @@ export const NewOrderPage: React.FC = () => {
     }
   }
 
+  const inputCls = `w-full h-12 px-4 rounded-xl border text-base transition-colors
+    bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+    placeholder:text-slate-400 dark:placeholder:text-slate-500
+    border-slate-200 dark:border-slate-600
+    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent`
+
   return (
     <div className="max-w-lg mx-auto">
       <Header title="Новый заказ" showBack />
@@ -90,19 +103,21 @@ export const NewOrderPage: React.FC = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="px-4 pt-4 pb-28 space-y-4">
         {/* Client selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Клиент</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Клиент
+          </label>
           <div className="relative">
             {selectedClient && !showClientDropdown ? (
               <div
-                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white flex items-center justify-between cursor-pointer"
+                className={`${inputCls} flex items-center justify-between cursor-pointer`}
                 onClick={() => { setClientSearch(selectedClient.name); setShowClientDropdown(true) }}
               >
                 <span>{selectedClient.name}</span>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className="h-4 w-4 text-slate-400" />
               </div>
             ) : (
               <input
-                className="w-full h-12 px-4 rounded-xl border border-gray-200 bg-white text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
                 placeholder="Поиск клиента..."
                 value={clientSearch}
                 onChange={(e) => { setClientSearch(e.target.value); setShowClientDropdown(true) }}
@@ -111,12 +126,12 @@ export const NewOrderPage: React.FC = () => {
             )}
 
             {showClientDropdown && (
-              <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg z-20 max-h-52 overflow-y-auto mt-1">
+              <div className="absolute top-full left-0 right-0 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl shadow-xl z-20 max-h-52 overflow-y-auto mt-1">
                 {filteredClients.map((c) => (
                   <button
                     key={c.id}
                     type="button"
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-2"
+                    className="w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-900 dark:text-slate-100"
                     onClick={() => {
                       setValue('client_id', c.id)
                       setClientSearch(c.name)
@@ -124,12 +139,12 @@ export const NewOrderPage: React.FC = () => {
                     }}
                   >
                     <span className="font-medium">{c.name}</span>
-                    {c.phone && <span className="text-sm text-gray-400">{c.phone}</span>}
+                    {c.phone && <span className="text-sm text-slate-400">{c.phone}</span>}
                   </button>
                 ))}
                 <button
                   type="button"
-                  className="w-full px-4 py-3 text-left hover:bg-blue-50 text-blue-600 flex items-center gap-2 border-t border-gray-100"
+                  className="w-full px-4 py-3 text-left hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center gap-2 border-t border-slate-100 dark:border-slate-700"
                   onClick={() => { setNewClientMode(true); setShowClientDropdown(false) }}
                 >
                   <Plus className="h-4 w-4" /> Новый клиент
@@ -139,7 +154,7 @@ export const NewOrderPage: React.FC = () => {
           </div>
 
           {newClientMode && (
-            <div className="mt-2 p-3 bg-blue-50 rounded-xl border border-blue-100 space-y-2">
+            <div className="mt-2 p-3 bg-indigo-50 dark:bg-indigo-950/30 rounded-xl border border-indigo-100 dark:border-indigo-800 space-y-2">
               <Input
                 placeholder="Имя клиента *"
                 value={newClientName}
@@ -182,11 +197,11 @@ export const NewOrderPage: React.FC = () => {
           {...register('price')}
         />
 
-        {/* Optional fields */}
+        {/* Optional fields toggle */}
         <button
           type="button"
           onClick={() => setExpanded(!expanded)}
-          className="w-full flex items-center justify-between py-2 text-sm text-gray-600 font-medium"
+          className="w-full flex items-center justify-between py-2 text-sm text-slate-600 dark:text-slate-400 font-medium"
         >
           Дополнительно
           {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
@@ -201,11 +216,18 @@ export const NewOrderPage: React.FC = () => {
               placeholder="0"
               {...register('prepayment')}
             />
-            <Input
-              label="Срок выполнения"
-              type="date"
-              {...register('deadline')}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Начало работ"
+                type="date"
+                {...register('start_date')}
+              />
+              <Input
+                label="Срок сдачи"
+                type="date"
+                {...register('deadline')}
+              />
+            </div>
             <Input
               label="Адрес объекта"
               type="text"
@@ -223,7 +245,7 @@ export const NewOrderPage: React.FC = () => {
       </form>
 
       {/* Fixed bottom button */}
-      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-56 bg-white border-t border-gray-100 p-4">
+      <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 p-4">
         <div className="max-w-lg mx-auto">
           <Button
             type="submit"
