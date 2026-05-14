@@ -21,4 +21,6 @@ export const ordersApi = {
     apiClient.patch<Order>(`/api/orders/${id}/status`, { status }),
 
   delete: (id: string) => apiClient.delete(`/api/orders/${id}`),
+
+  share: (id: string) => apiClient.post<{ token: string }>(`/api/orders/${id}/share`),
 }

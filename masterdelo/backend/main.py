@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 import os
 
 from core.config import settings
-from routers import auth, clients, orders, order_items, photos, pdf
+from routers import auth, clients, orders, order_items, photos, pdf, public
 from services.scheduler import scheduler
 
 
@@ -41,6 +41,7 @@ app.include_router(orders.router)
 app.include_router(order_items.router)
 app.include_router(photos.router)
 app.include_router(pdf.router)
+app.include_router(public.router)
 
 
 @app.get("/api/health")

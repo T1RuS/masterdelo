@@ -1,15 +1,40 @@
 import React, { useState } from 'react'
 import { startOfWeek, startOfMonth } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { TrendingUp, Wallet, AlertCircle } from 'lucide-react'
+import { TrendingUp, Wallet, AlertCircle, Download } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { PageSpinner } from '../components/ui/Spinner'
 import { OrderStatusBadge } from '../components/ui/Badge'
 import { useOrders } from '../hooks/useOrders'
 import { formatMoney, formatDateShort } from '../utils/formatters'
+import { ORDER_STATUS_LABELS } from '../utils/constants'
+import type { OrderStatus } from '../types'
 import { useNavigate } from 'react-router-dom'
 
 type Period = 'week' | 'month' | 'all'
+
+function exportCSV(orders: { title: string; client?: { name: string } | null; status: string; price: number; prepayment: number; created_at: string }[], period: string) {
+  const headers = ['Название', 'Клиент', 'Статус', 'Сумма (₽)', 'Аванс (₽)', 'Остаток (₽)', 'Дата создания']
+  const rows = orders.map((o) => [
+    o.title,
+    o.client?.name || '',
+    ORDER_STATUS_LABELS[o.status as OrderStatus],
+    o.price,
+    o.prepayment,
+    o.price - o.prepayment,
+    new Date(o.created_at).toLocaleDateString('ru-RU'),
+  ])
+  const csv = [headers, ...rows]
+    .map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+    .join('\n')
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `masterdelo_${period}_${new Date().toISOString().split('T')[0]}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 const PERIODS = [
   { key: 'week',  label: 'Эта неделя' },
@@ -45,7 +70,18 @@ export const FinancePage: React.FC = () => {
 
   return (
     <div>
-      <Header title="Финансы" />
+      <Header
+        title="Финансы"
+        actions={
+          <button
+            onClick={() => exportCSV(periodOrders, period)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Excel</span>
+          </button>
+        }
+      />
 
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-4 space-y-4">
         {/* Period selector */}

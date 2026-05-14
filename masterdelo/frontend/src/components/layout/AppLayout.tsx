@@ -20,12 +20,12 @@ export const AppLayout: React.FC = () => {
       {/* Desktop sidebar — always dark */}
       <aside className="hidden md:flex fixed top-0 left-0 h-full w-56 bg-slate-900 flex-col py-6 z-40">
         {/* Logo */}
-        <div className="px-5 mb-8 flex items-center gap-2.5">
+        <NavLink to="/" end className="px-5 mb-8 flex items-center gap-2.5 group">
           <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0">
             <span className="text-white text-xs font-bold">МД</span>
           </div>
-          <span className="text-white text-lg font-bold tracking-tight">МастерДело</span>
-        </div>
+          <span className="text-white text-lg font-bold tracking-tight group-hover:text-indigo-200 transition-colors">МастерДело</span>
+        </NavLink>
 
         <nav className="flex-1 px-3 space-y-0.5">
           {sideLinks.map(({ to, icon: Icon, label, exact }) => (

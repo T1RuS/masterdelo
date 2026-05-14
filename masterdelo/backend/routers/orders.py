@@ -202,6 +202,27 @@ async def update_order_status(
     return result.scalar_one()
 
 
+@router.post("/{order_id}/share")
+async def generate_share_token(
+    order_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Order).where(Order.id == order_id, Order.user_id == current_user.id)
+    )
+    order = result.scalar_one_or_none()
+    if not order:
+        raise HTTPException(status_code=404, detail="Заказ не найден")
+
+    if not order.share_token:
+        import uuid
+        order.share_token = str(uuid.uuid4())
+        await db.commit()
+
+    return {"token": order.share_token}
+
+
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_order(
     order_id: str,

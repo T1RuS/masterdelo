@@ -45,3 +45,11 @@ export const STATUS_CAL_COLORS: Record<OrderStatus, string> = {
   paid:        'bg-emerald-600',
   cancelled:   'bg-red-400',
 }
+
+export const STATUS_CAL_COLORS_BG: Record<OrderStatus, string> = {
+  new:         'bg-slate-400/30 dark:bg-slate-600/40',
+  in_progress: 'bg-indigo-400/30 dark:bg-indigo-600/40',
+  done:        'bg-green-400/30 dark:bg-green-600/40',
+  paid:        'bg-emerald-400/30 dark:bg-emerald-600/40',
+  cancelled:   'bg-red-400/30 dark:bg-red-600/40',
+}

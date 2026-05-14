@@ -20,6 +20,7 @@ class Order(Base):
     deadline: Mapped[date | None] = mapped_column(Date)
     address: Mapped[str | None] = mapped_column(String(500))
     notes: Mapped[str | None] = mapped_column(Text)
+    share_token: Mapped[str | None] = mapped_column(String(36), unique=True, nullable=True)
     is_overdue: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(

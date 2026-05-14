@@ -5,11 +5,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
+import { AuthLayout } from '../components/layout/AuthLayout'
 import { authApi } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 
 const schema = z.object({
-  email: z.string().email('Неверный формат email'),
+  email:    z.string().email('Неверный формат email'),
   password: z.string().min(1, 'Введите пароль'),
 })
 
@@ -41,53 +42,46 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-blue-600">МастерДело</h1>
-          <p className="text-gray-500 mt-2">Управление заказами</p>
-        </div>
+    <AuthLayout>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl shadow-slate-200/60 dark:shadow-slate-900/60 border border-slate-200 dark:border-slate-700 p-6">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Войти в аккаунт</h2>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Войти</h2>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input
+            label="Email"
+            type="email"
+            placeholder="mail@example.com"
+            autoComplete="email"
+            error={errors.email?.message}
+            {...register('email')}
+          />
+          <Input
+            label="Пароль"
+            type="password"
+            placeholder="••••••••"
+            autoComplete="current-password"
+            error={errors.password?.message}
+            {...register('password')}
+          />
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              label="Email"
-              type="email"
-              placeholder="mail@example.com"
-              autoComplete="email"
-              error={errors.email?.message}
-              {...register('email')}
-            />
-            <Input
-              label="Пароль"
-              type="password"
-              placeholder="••••••••"
-              autoComplete="current-password"
-              error={errors.password?.message}
-              {...register('password')}
-            />
+          {error && (
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
+              {error}
+            </div>
+          )}
 
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-                {error}
-              </div>
-            )}
+          <Button type="submit" fullWidth loading={isSubmitting} size="lg">
+            Войти
+          </Button>
+        </form>
 
-            <Button type="submit" fullWidth loading={isSubmitting} size="lg">
-              Войти
-            </Button>
-          </form>
-
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Нет аккаунта?{' '}
-            <Link to="/register" className="text-blue-600 font-medium hover:underline">
-              Зарегистрироваться
-            </Link>
-          </p>
-        </div>
+        <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-5">
+          Нет аккаунта?{' '}
+          <Link to="/register" className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
+            Зарегистрироваться
+          </Link>
+        </p>
       </div>
-    </div>
+    </AuthLayout>
   )
 }
