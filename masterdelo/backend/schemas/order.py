@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List
 from datetime import datetime, date
 from schemas.order_item import OrderItemOut
 from schemas.photo import PhotoOut
+from core.sanitize import sanitize_text
 
 
 class ClientBrief(BaseModel):
@@ -24,6 +25,31 @@ class OrderCreate(BaseModel):
     description: Optional[str] = None
     notes: Optional[str] = None
 
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, v: str) -> str:
+        v = sanitize_text(v, max_length=500)
+        if not v:
+            raise ValueError("Название заказа не может быть пустым")
+        return v
+
+    @field_validator("description", "notes", "address", mode="before")
+    @classmethod
+    def validate_text_fields(cls, v):
+        if v is None:
+            return v
+        return sanitize_text(str(v), max_length=5000)
+
+    @field_validator("price", "prepayment", mode="before")
+    @classmethod
+    def validate_money(cls, v):
+        val = float(v)
+        if val < 0:
+            raise ValueError("Сумма не может быть отрицательной")
+        if val > 99_999_999:
+            raise ValueError("Сумма превышает допустимый максимум")
+        return val
+
 
 class OrderUpdate(BaseModel):
     title: Optional[str] = None
@@ -36,6 +62,35 @@ class OrderUpdate(BaseModel):
     deadline: Optional[date] = None
     address: Optional[str] = None
     notes: Optional[str] = None
+
+    @field_validator("title", mode="before")
+    @classmethod
+    def validate_title(cls, v):
+        if v is None:
+            return v
+        v = sanitize_text(str(v), max_length=500)
+        if not v:
+            raise ValueError("Название заказа не может быть пустым")
+        return v
+
+    @field_validator("description", "notes", "address", mode="before")
+    @classmethod
+    def validate_text_fields(cls, v):
+        if v is None:
+            return v
+        return sanitize_text(str(v), max_length=5000)
+
+    @field_validator("price", "prepayment", mode="before")
+    @classmethod
+    def validate_money(cls, v):
+        if v is None:
+            return v
+        val = float(v)
+        if val < 0:
+            raise ValueError("Сумма не может быть отрицательной")
+        if val > 99_999_999:
+            raise ValueError("Сумма превышает допустимый максимум")
+        return val
 
 
 class OrderStatusUpdate(BaseModel):
@@ -59,6 +114,7 @@ class OrderOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     client: Optional[ClientBrief] = None
+    total_cost: float = 0.0
 
     model_config = {"from_attributes": True}
 

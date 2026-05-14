@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { startOfWeek, startOfMonth } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { TrendingUp, Wallet, AlertCircle, Download, Receipt } from 'lucide-react'
+import { TrendingUp, Wallet, AlertCircle, Download, Receipt, Package, ArrowDownRight } from 'lucide-react'
 import { Header } from '../components/layout/Header'
 import { PageSpinner } from '../components/ui/Spinner'
 import { OrderStatusBadge } from '../components/ui/Badge'
@@ -14,15 +14,16 @@ import { useNavigate } from 'react-router-dom'
 
 type Period = 'week' | 'month' | 'all'
 
-function exportCSV(orders: { title: string; client?: { name: string } | null; status: string; price: number; prepayment: number; created_at: string }[], period: string) {
-  const headers = ['Название', 'Клиент', 'Статус', 'Сумма (₽)', 'Аванс (₽)', 'Остаток (₽)', 'Дата создания']
+function exportCSV(orders: { title: string; client?: { name: string } | null; status: string; price: number; prepayment: number; total_cost: number; created_at: string }[], period: string) {
+  const headers = ['Название', 'Клиент', 'Статус', 'Выручка (₽)', 'Материалы (₽)', 'Прибыль (₽)', 'Аванс (₽)', 'Дата создания']
   const rows = orders.map((o) => [
     o.title,
     o.client?.name || '',
     ORDER_STATUS_LABELS[o.status as OrderStatus],
     o.price,
+    o.total_cost,
+    o.price - o.total_cost,
     o.prepayment,
-    o.price - o.prepayment,
     new Date(o.created_at).toLocaleDateString('ru-RU'),
   ])
   const csv = [headers, ...rows]
@@ -59,22 +60,30 @@ export const FinancePage: React.FC = () => {
   }
 
   const periodOrders = filterByPeriod(allOrders)
+  const paidOrders = periodOrders.filter((o) => o.status === 'paid')
 
-  const earned = periodOrders
-    .filter((o) => o.status === 'paid')
-    .reduce((s, o) => s + o.price, 0)
+  // Выручка — суммарная цена оплаченных заказов (включает работу + материалы)
+  const revenue = paidOrders.reduce((s, o) => s + o.price, 0)
 
+  // Расходы на материалы — из позиций оплаченных заказов
+  const materialCost = paidOrders.reduce((s, o) => s + (o.total_cost ?? 0), 0)
+
+  // Прибыль = Выручка − Материалы
+  const profit = revenue - materialCost
+
+  // В работе
   const inWork = periodOrders
     .filter((o) => ['in_progress', 'done'].includes(o.status))
     .reduce((s, o) => s + o.price, 0)
 
+  // НПД: по закону (ФЗ №422-ФЗ) начисляется на весь полученный доход (выручку),
+  // расходы на материалы не вычитаются
+  const taxBase = revenue
+  const taxAmount = (taxBase * taxRate) / 100
+
   const debts = allOrders.filter(
     (o) => o.status === 'done' && o.price - o.prepayment > 0
   )
-
-  const paidOrders = periodOrders.filter((o) => o.status === 'paid')
-  const taxBase = paidOrders.reduce((s, o) => s + o.price, 0)
-  const taxAmount = (taxBase * taxRate) / 100
 
   return (
     <div>
@@ -117,17 +126,38 @@ export const FinancePage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Заработал</p>
+                  <TrendingUp className="h-4 w-4 text-blue-500" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Выручка (оборот)</p>
                 </div>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatMoney(earned)}</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatMoney(revenue)}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">получено за оплаченные заказы</p>
               </div>
+
               <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Wallet className="h-4 w-4 text-indigo-500" />
                   <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">В работе</p>
                 </div>
                 <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{formatMoney(inWork)}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">ожидаемая выручка</p>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Package className="h-4 w-4 text-orange-500" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Материалы</p>
+                </div>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatMoney(materialCost)}</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">расходы на материалы</p>
+              </div>
+
+              <div className="bg-green-50 dark:bg-green-950/30 rounded-2xl border border-green-200 dark:border-green-900/50 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <ArrowDownRight className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <p className="text-xs text-green-700 dark:text-green-400 font-medium">Прибыль</p>
+                </div>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{formatMoney(profit)}</p>
+                <p className="text-[10px] text-green-600/70 dark:text-green-500/70 mt-1">выручка − материалы</p>
               </div>
             </div>
 
@@ -146,7 +176,7 @@ export const FinancePage: React.FC = () => {
                     <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mb-1">Налоговая база</p>
                     <p className="font-bold text-amber-900 dark:text-amber-200">{formatMoney(taxBase)}</p>
                     <p className="text-[10px] text-amber-600/60 dark:text-amber-400/60 mt-0.5">
-                      доход от оплаченных заказов
+                      вся выручка (оборот)
                     </p>
                   </div>
                   <div>
@@ -163,7 +193,9 @@ export const FinancePage: React.FC = () => {
                 </div>
 
                 <p className="text-[11px] text-amber-600/70 dark:text-amber-400/60">
-                  Расчёт: {formatMoney(taxBase)} × {taxRate}% = {formatMoney(taxAmount)}.
+                  По закону (ФЗ №422-ФЗ) НПД начисляется на всю выручку —{' '}
+                  {formatMoney(taxBase)} × {taxRate}% = {formatMoney(taxAmount)}.
+                  Расходы на материалы из налоговой базы не вычитаются.
                   Ставку НПД можно изменить в настройках профиля.
                 </p>
               </div>
@@ -203,29 +235,40 @@ export const FinancePage: React.FC = () => {
               <div>
                 <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-3">Заказы за период</h2>
                 <div className="space-y-2 md:grid md:grid-cols-2 md:gap-2 md:space-y-0">
-                  {periodOrders.map((o) => (
-                    <div
-                      key={o.id}
-                      className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow"
-                      onClick={() => navigate(`/orders/${o.id}`)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{o.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <OrderStatusBadge status={o.status} />
-                          <span className="text-xs text-slate-400 dark:text-slate-500">{formatDateShort(o.created_at)}</span>
+                  {periodOrders.map((o) => {
+                    const orderProfit = o.price - (o.total_cost ?? 0)
+                    const orderTax = (o.price * taxRate) / 100
+                    return (
+                      <div
+                        key={o.id}
+                        className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center gap-3 cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => navigate(`/orders/${o.id}`)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{o.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <OrderStatusBadge status={o.status} />
+                            <span className="text-xs text-slate-400 dark:text-slate-500">{formatDateShort(o.created_at)}</span>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatMoney(o.price)}</p>
+                          {o.status === 'paid' && (
+                            <>
+                              {(o.total_cost ?? 0) > 0 && (
+                                <p className="text-[10px] text-green-600 dark:text-green-400 mt-0.5">
+                                  прибыль: {formatMoney(orderProfit)}
+                                </p>
+                              )}
+                              <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
+                                НПД: {formatMoney(orderTax)}
+                              </p>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-bold text-slate-900 dark:text-slate-100">{formatMoney(o.price)}</p>
-                        {o.status === 'paid' && (
-                          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">
-                            НПД: {formatMoney((o.price * taxRate) / 100)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             ) : (

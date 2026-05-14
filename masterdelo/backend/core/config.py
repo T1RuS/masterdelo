@@ -14,10 +14,16 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_DAYS: int = 7
 
+    ENVIRONMENT: str = "development"
+
     MAX_UPLOAD_SIZE_MB: int = 10
     UPLOAD_DIR: str = "static/uploads"
 
     ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT == "production"
 
     class Config:
         env_file = ".env"

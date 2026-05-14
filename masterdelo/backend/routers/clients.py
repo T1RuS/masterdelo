@@ -1,19 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select
 from typing import List
 from core.deps import get_db, get_current_user
+from core.limiter import limiter
 from models.user import User
 from models.client import Client
 from models.order import Order
 from schemas.client import ClientCreate, ClientUpdate, ClientOut, ClientWithStats
-from schemas.order import OrderOut
 
 router = APIRouter(prefix="/api/clients", tags=["clients"])
 
 
 @router.get("", response_model=List[ClientWithStats])
+@limiter.limit("60/minute")
 async def list_clients(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -24,9 +26,7 @@ async def list_clients(
 
     out = []
     for client in clients:
-        orders_result = await db.execute(
-            select(Order).where(Order.client_id == client.id)
-        )
+        orders_result = await db.execute(select(Order).where(Order.client_id == client.id))
         orders = orders_result.scalars().all()
         total = sum(float(o.price) for o in orders)
         out.append(
@@ -40,7 +40,9 @@ async def list_clients(
 
 
 @router.post("", response_model=ClientOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 async def create_client(
+    request: Request,
     data: ClientCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -53,7 +55,9 @@ async def create_client(
 
 
 @router.get("/{client_id}", response_model=ClientWithStats)
+@limiter.limit("60/minute")
 async def get_client(
+    request: Request,
     client_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -77,7 +81,9 @@ async def get_client(
 
 
 @router.put("/{client_id}", response_model=ClientOut)
+@limiter.limit("30/minute")
 async def update_client(
+    request: Request,
     client_id: str,
     data: ClientUpdate,
     current_user: User = Depends(get_current_user),
@@ -99,7 +105,9 @@ async def update_client(
 
 
 @router.delete("/{client_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("20/minute")
 async def delete_client(
+    request: Request,
     client_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

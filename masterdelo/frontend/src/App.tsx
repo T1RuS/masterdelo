@@ -17,6 +17,8 @@ import { LandingPage } from './pages/LandingPage'
 import { EditOrderPage } from './pages/EditOrderPage'
 import { PublicOrderPage } from './pages/PublicOrderPage'
 import { AdminPage } from './pages/AdminPage'
+import { OfferPage } from './pages/OfferPage'
+import { PrivacyPage } from './pages/PrivacyPage'
 import { useAuthStore } from './store/authStore'
 
 const queryClient = new QueryClient({
@@ -37,6 +39,8 @@ const App: React.FC = () => (
       <ToastProvider>
         <Routes>
           <Route path="/landing" element={<LandingPage />} />
+          <Route path="/offer" element={<OfferPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/share/:token" element={<PublicOrderPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

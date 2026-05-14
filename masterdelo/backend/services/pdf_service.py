@@ -106,9 +106,19 @@ def generate_invoice(order, user, client) -> bytes:
     story.append(Spacer(1, 4 * mm))
 
     # Исполнитель
+    _TAX_REGIME_LABELS = {
+        'npd': 'Самозанятый (НПД)',
+        'usn6': 'ИП (УСН 6%)',
+        'usn15': 'ИП (УСН 15%)',
+        'psn': 'ИП (Патент)',
+        'osno': 'ИП (ОСНО)',
+    }
     executor_lines = [f"<b>Исполнитель:</b> {user.full_name or '—'}"]
     if user.company_name:
         executor_lines.append(user.company_name)
+    tax_regime = getattr(user, 'tax_regime', None)
+    if tax_regime and tax_regime in _TAX_REGIME_LABELS:
+        executor_lines.append(_TAX_REGIME_LABELS[tax_regime])
     if user.inn:
         executor_lines.append(f"ИНН: {user.inn}")
     if user.phone:
@@ -206,9 +216,19 @@ def generate_act(order, user, client) -> bytes:
     story.append(HRFlowable(width="100%", thickness=1, color=colors.black))
     story.append(Spacer(1, 4 * mm))
 
+    _TAX_REGIME_LABELS_ACT = {
+        'npd': 'Самозанятый (НПД)',
+        'usn6': 'ИП (УСН 6%)',
+        'usn15': 'ИП (УСН 15%)',
+        'psn': 'ИП (Патент)',
+        'osno': 'ИП (ОСНО)',
+    }
     executor_lines = [f"<b>Исполнитель:</b> {user.full_name or '—'}"]
     if user.company_name:
         executor_lines.append(user.company_name)
+    tax_regime_act = getattr(user, 'tax_regime', None)
+    if tax_regime_act and tax_regime_act in _TAX_REGIME_LABELS_ACT:
+        executor_lines.append(_TAX_REGIME_LABELS_ACT[tax_regime_act])
     if user.inn:
         executor_lines.append(f"ИНН: {user.inn}")
     if user.phone:

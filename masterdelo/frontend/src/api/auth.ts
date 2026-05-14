@@ -2,7 +2,7 @@ import apiClient from './client'
 import type { User } from '../types'
 
 export const authApi = {
-  register: (data: { email: string; password: string; full_name?: string }) =>
+  register: (data: { email: string; password: string; full_name?: string; consent_offer?: boolean; consent_pd?: boolean }) =>
     apiClient.post<{ access_token: string }>('/api/auth/register', data),
 
   login: (data: { email: string; password: string }) =>

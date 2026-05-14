@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { Button } from '../components/ui/Button'
 import { Input } from '../components/ui/Input'
 import { AuthLayout } from '../components/layout/AuthLayout'
+import { ConsentCheckbox } from '../components/auth/ConsentCheckbox'
 import { authApi } from '../api/auth'
 import { useAuthStore } from '../store/authStore'
 
@@ -21,6 +22,8 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
   const { setToken, setUser } = useAuthStore()
   const [error, setError] = useState('')
+  const [consentOffer, setConsentOffer] = useState(false)
+  const [consentPd, setConsentPd] = useState(false)
 
   const {
     register,
@@ -28,10 +31,16 @@ export const RegisterPage: React.FC = () => {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) })
 
+  const canSubmit = consentOffer && consentPd
+
   const onSubmit = async (data: FormData) => {
+    if (!canSubmit) {
+      setError('Необходимо принять оферту и дать согласие на обработку персональных данных')
+      return
+    }
     setError('')
     try {
-      const res = await authApi.register(data)
+      const res = await authApi.register({ ...data, consent_offer: true, consent_pd: true })
       setToken(res.data.access_token)
       const meRes = await authApi.getMe()
       setUser(meRes.data)
@@ -74,13 +83,20 @@ export const RegisterPage: React.FC = () => {
             {...register('password')}
           />
 
+          <ConsentCheckbox
+            consentOffer={consentOffer}
+            consentPd={consentPd}
+            onChangeOffer={setConsentOffer}
+            onChangePd={setConsentPd}
+          />
+
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">
               {error}
             </div>
           )}
 
-          <Button type="submit" fullWidth loading={isSubmitting} size="lg">
+          <Button type="submit" fullWidth loading={isSubmitting} size="lg" disabled={!canSubmit}>
             Зарегистрироваться
           </Button>
         </form>

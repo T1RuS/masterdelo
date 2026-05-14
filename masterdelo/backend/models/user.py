@@ -23,6 +23,12 @@ class User(Base):
     max_messenger: Mapped[str | None] = mapped_column(String(100))
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     tax_rate: Mapped[float] = mapped_column(Float, default=4.0)
+    tax_regime: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    consent_offer: Mapped[bool] = mapped_column(Boolean, default=False)
+    consent_offer_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    consent_pd: Mapped[bool] = mapped_column(Boolean, default=False)
+    consent_pd_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    consent_ip: Mapped[str | None] = mapped_column(String(45), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     clients = relationship("Client", back_populates="user", cascade="all, delete-orphan")

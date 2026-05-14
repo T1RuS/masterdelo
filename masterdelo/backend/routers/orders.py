@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from datetime import date
 from core.deps import get_db, get_current_user
+from core.limiter import limiter
 from models.user import User
 from models.order import Order
 from models.client import Client
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/api/orders", tags=["orders"])
 ALLOWED_TRANSITIONS = {
     "new": ["in_progress", "cancelled"],
     "in_progress": ["done", "cancelled"],
-    "done": ["paid", "in_progress", "cancelled"],
+    "done": ["paid", "cancelled"],
     "paid": [],
     "cancelled": [],
 }
@@ -37,7 +38,9 @@ def _compute_order_detail(order: Order) -> OrderDetail:
 
 
 @router.get("", response_model=List[OrderOut])
+@limiter.limit("60/minute")
 async def list_orders(
+    request: Request,
     status: Optional[str] = Query(None),
     client_id: Optional[str] = Query(None),
     deadline_from: Optional[date] = Query(None),
@@ -48,7 +51,7 @@ async def list_orders(
 ):
     query = (
         select(Order)
-        .options(selectinload(Order.client))
+        .options(selectinload(Order.client), selectinload(Order.items))
         .where(Order.user_id == current_user.id)
     )
 
@@ -83,11 +86,19 @@ async def list_orders(
     )
 
     result = await db.execute(query)
-    return result.scalars().all()
+    orders = result.scalars().all()
+    out = []
+    for o in orders:
+        d = OrderOut.model_validate(o).model_dump()
+        d["total_cost"] = sum(float(i.cost) * float(i.quantity) for i in o.items)
+        out.append(d)
+    return out
 
 
 @router.post("", response_model=OrderOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 async def create_order(
+    request: Request,
     data: OrderCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -111,7 +122,9 @@ async def create_order(
 
 
 @router.get("/{order_id}", response_model=OrderDetail)
+@limiter.limit("60/minute")
 async def get_order(
+    request: Request,
     order_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -133,7 +146,9 @@ async def get_order(
 
 
 @router.put("/{order_id}", response_model=OrderOut)
+@limiter.limit("30/minute")
 async def update_order(
+    request: Request,
     order_id: str,
     data: OrderUpdate,
     current_user: User = Depends(get_current_user),
@@ -169,7 +184,9 @@ async def update_order(
 
 
 @router.patch("/{order_id}/status", response_model=OrderOut)
+@limiter.limit("30/minute")
 async def update_order_status(
+    request: Request,
     order_id: str,
     data: OrderStatusUpdate,
     current_user: User = Depends(get_current_user),
@@ -203,7 +220,9 @@ async def update_order_status(
 
 
 @router.post("/{order_id}/share")
+@limiter.limit("20/minute")
 async def generate_share_token(
+    request: Request,
     order_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -224,7 +243,9 @@ async def generate_share_token(
 
 
 @router.delete("/{order_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit("20/minute")
 async def delete_order(
+    request: Request,
     order_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

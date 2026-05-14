@@ -10,6 +10,7 @@ export interface User {
   max_messenger: string | null
   is_admin: boolean
   tax_rate: number
+  tax_regime: 'npd' | 'usn6' | 'usn15' | 'psn' | 'osno' | null
   created_at: string
 }
 
@@ -58,6 +59,7 @@ export interface Order {
   status: OrderStatus
   price: number
   prepayment: number
+  total_cost: number
   start_date: string | null
   deadline: string | null
   address: string | null
